@@ -1,0 +1,12 @@
+# ninja log v5
+0	9990	1710578027547166046	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/ball_query_gpu.o	936f28caddb34389
+0	14410	1710578031959120374	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/ball_query.o	93e426163aae52e0
+9990	24584	1710578042135011954	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/bindings.o	34281fa6e3cdc214
+14414	28795	1710578046342965986	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/cylinder_query.o	e10366cb260e6277
+24584	34472	1710578052026902952	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/cylinder_query_gpu.o	3c8d3b232136efb8
+28796	43360	1710578060905421191	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/group_points.o	24ec04cbf3624096
+34472	44492	1710578062045098426	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/group_points_gpu.o	13f4a21d3638382
+44492	54282	1710578071838423086	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/interpolate_gpu.o	94d950ae841eb729
+43361	57704	1710578075253529795	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/interpolate.o	49567d8392713984
+57705	67843	1710578085398989734	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/sampling_gpu.o	f87ee63d081a1122
+54282	68771	1710578086318767532	/home/tinker/anygrasp_sdk/pointnet2/build/temp.linux-x86_64-cpython-38/pointnet2/_ext_src/src/sampling.o	7b34df401afaa370
