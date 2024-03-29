@@ -2,16 +2,19 @@ import pyrealsense2 as rs
 import numpy as np
 import argparse
 import open3d as o3d
+from PIL import Image
 from gsnet import AnyGrasp
 from graspnetAPI import GraspGroup
 import json
 import websocket
-
+from geometry_msgs.msg import Pose,Point, Quaternion
+import transformations as tf
+import cv2
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--checkpoint_path', default="log/checkpoint_detection.tar", help='Model checkpoint path')
 parser.add_argument('--max_gripper_width', type=float, default=0.1, help='Maximum gripper width (<=0.1m)')
-parser.add_argument('--gripper_height', type=float, default=0.03, help='Gripper height')
+parser.add_argument('--gripper_height', type=float, default=0.2, help='Gripper height')
 parser.add_argument('--top_down_grasp', default='false', help='Output top-down grasps')
 parser.add_argument('--debug', default='false', help='Enable visualization')
 cfgs = parser.parse_args()
@@ -21,10 +24,10 @@ class CameraInfo:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.fx = 927.17
-        self.fy = 927.37
-        self.cx = 651.32
-        self.cy = 349.62
+        self.fx = 613.891
+        self.fy = 612.346
+        self.cx = 322.211
+        self.cy = 246.369
         self.scale = 1000.0
 
 def create_point_cloud_from_depth_image(depth, camera, organized=True):
@@ -48,8 +51,26 @@ if __name__ == "__main__":
     pipeline = rs.pipeline()
     config = rs.config()
 
+    pipeline_wrapper = rs.pipeline_wrapper(pipeline)
+    pipeline_profile = config.resolve(pipeline_wrapper)
+    device = pipeline_profile.get_device()
+    device_product_line = str(device.get_info(rs.camera_info.product_line))
+
+    found_rgb = False
+    for s in device.sensors:
+        if s.get_info(rs.camera_info.name) == 'RGB Camera':
+            found_rgb = True
+            break
+    if not found_rgb:
+        print("The demo requires Depth camera with Color sensor")
+        exit(0)
+
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
+    if device_product_line == 'L500':
+        config.enable_stream(rs.stream.color, 960, 540, rs.format.rgb8, 30)
+    else:
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.rgb8, 30)
 
     # Start streaming
     pipeline.start(config)
@@ -76,7 +97,11 @@ if __name__ == "__main__":
 
         # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data(),dtype=np.float32)
-        color_image = np.asanyarray(color_frame.get_data(),dtype=np.int32)
+        color_image = np.asanyarray(color_frame.get_data())
+
+        im = Image.fromarray(color_image)
+        im.save("img.jpg")
+        cv2.imwrite("img.png",color_image)
 
         points = create_point_cloud_from_depth_image(depth_image, camera)
         mask = (points[:,:,2] > 0) & (points[:,:,2] < 1.5)
@@ -85,27 +110,38 @@ if __name__ == "__main__":
 
         gg, cloud = anygrasp.get_grasp(points, color_image, lims)
         print(gg)
-        print(len(gg))
+        # print(len(gg))
+        if gg is None:
+            continue
 
         gg = gg.nms().sort_by_score()
         gg_pick = gg[0]
-        
-        data = {
-            "op": "publish",
-            "topic": "/moveit_pose",
-            "type": "geometry_msgs/Twist",
-            "msg": {
-                "data": "111"
+
+        # quaternion = tf.quaternion_from_matrix(rotation_matrix)
+
+        if gg[0] is not None:
+            # point = Point(x=0.5,y=0.2,z=1.0)
+            # ori = Quaternion(x=0.0,y=0.0,z=0.0,w=1.0)
+            # pose = {"target_pose":Pose(position=point,orientation=ori).__dict__}
+            pose = {"position": {"x": 0.5, "y": -0.2, "z": 1.0}, "orientation": {"x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0}}
+            target = [pose]
+            print(target)
+            data = {
+                "op": "call_service",
+                "service": "/tinker_arm_control_service",
+                # "args": "[{target_pose: {position: {x: 0.5, y: -0.2, z: 1.0}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}]",
+                "args": target
             }
-        }
 
-        json_data = json.dumps(data)
+            json_data = json.dumps(data)
 
-        ws.connect("ws://127.0.0.1:9090")
-        ws.send(json_data)
+            ws.connect("ws://127.0.0.1:9090")
+            ws.send(json_data)
 
-        # Print the response from the ROS Bridge
-        print(ws.recv())
+            # Print the response from the ROS Bridge
+            print(ws.recv())
+            if (ws.recv()["result"] == True):
+                break
 
 
 
